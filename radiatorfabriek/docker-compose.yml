@@ -1,0 +1,70 @@
+version: "3"
+
+services:
+  radiatorfabriek_db:
+    image: mariadb:10.4.18
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database:/docker-entrypoint-initdb.d
+    restart: always
+    #command: --max_allowed_packet=32505856      # Set max_allowed_packet to 256M
+    environment:
+      MYSQL_ROOT_PASSWORD: 4H2g2x446X
+      MYSQL_DATABASE: radiatorfabriek_db
+      MYSQL_USER: radiatorfabriek_db
+      MYSQL_PASSWORD: yFtCD796Pn
+    container_name: radiatorfabriek_db
+    # networks:
+    # - radiatorfabriek_db
+
+  radiatorfabriek_wp:
+    depends_on:
+      - radiatorfabriek_db
+    image: radiatorfabriek:1.0.0
+    ports:
+      - 8000:80
+    # expose:
+    #   - 80
+    restart: always
+    volumes:
+      - "./source:/var/www/html"
+      - "./configs/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini"
+      - "./configs/php.ini:/usr/local/etc/php/conf.d/php.ini"
+    environment:
+      WORDPRESS_CONFIG_EXTRA: |
+        define('AUTOMATIC_UPDATER_DISABLED', true);
+        define('WP_DEBUG', true);
+      VIRTUAL_HOST: test.radiatorfabriek.nl
+      LETSENCRYPT_HOST: test.radiatorfabriek.nl
+      WORDPRESS_DB_HOST: radiatorfabriek_db
+      WORDPRESS_DB_USER: radiatorfabriek_db
+      WORDPRESS_DB_NAME: radiatorfabriek_db
+      WORDPRESS_DB_PASSWORD: yFtCD796Pn
+    container_name: radiatorfabriek_wp
+    # networks:
+    # - radiatorfabriek_db
+    # - nginx-proxy
+
+  # radiatorfabriek_pma:
+  #   image: phpmyadmin/phpmyadmin
+  #   environment:
+  #     PMA_PORT: 3306
+  #     PMA_HOST: radiatorfabriek_db
+  #     PMA_USER: root
+  #     PMA_PASSWORD: 4H2g2x446X
+  #   ports:
+  #     - "8181:80"
+  #   restart: always
+  #   depends_on:
+  #     - radiatorfabriek_db
+  #   networks:
+  #     - radiatorfabriek_db
+  #   container_name: radiatorfabriek_pma
+volumes:
+  db_data:
+
+# networks:
+# radiatorfabriek_db:
+#   internal: true
+# nginx-proxy:
+#   external: true
